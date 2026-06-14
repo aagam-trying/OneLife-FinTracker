@@ -2,50 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>FinanceTrack</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#6366f1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     :root {
       --bg: #0f172a;
       --surface: #1e293b;
       --surface2: #334155;
+      --surface3: #475569;
       --accent: #6366f1;
       --accent2: #818cf8;
+      --accent3: #a5b4fc;
       --text: #f1f5f9;
       --muted: #94a3b8;
       --green: #22c55e;
       --red: #ef4444;
-      --radius: 16px;
+      --radius: 24px;
     }
 
-    body {
+    html, body {
+      height: 100%;
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      overflow: hidden;
     }
 
+    .screen {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top, 20px) 0 env(safe-area-inset-bottom, 20px);
+    }
+
+    /* ── Header ── */
     header {
-      padding: 20px 20px 12px;
+      padding: 16px 20px 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--surface2);
+      flex-shrink: 0;
     }
 
-    header h1 {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--accent2);
-    }
+    header h1 { font-size: 17px; font-weight: 700; color: var(--accent2); }
 
     #tab-bar {
       display: flex;
@@ -67,263 +72,451 @@
       transition: all 0.2s;
     }
 
-    .tab.active {
-      background: var(--accent);
-      color: white;
-    }
+    .tab.active { background: var(--accent); color: white; }
 
-    main {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-    }
+    /* ── Views ── */
+    #classify-view, #history-view { display: none; flex: 1; flex-direction: column; min-height: 0; }
+    #classify-view.active, #history-view.active { display: flex; }
 
     /* ── Classify view ── */
-    #classify-view, #history-view { display: none; }
-    #classify-view.active, #history-view.active { display: block; }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--surface);
-      border-radius: 20px;
-      padding: 4px 12px;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 20px;
-    }
-
-    .badge span { color: var(--accent2); font-weight: 700; }
-
-    .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 16px;
-    }
-
-    .card .amount {
-      font-size: 36px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -1px;
-    }
-
-    .card .amount span {
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--muted);
-      margin-right: 4px;
-    }
-
-    .card .merchant {
-      font-size: 18px;
-      font-weight: 600;
-      margin-top: 6px;
-      color: var(--text);
-    }
-
-    .card .meta {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 6px;
-      display: flex;
-      gap: 12px;
-    }
-
-    .categories {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .cat-btn {
-      background: var(--surface);
-      border: 2px solid var(--surface2);
-      border-radius: var(--radius);
-      padding: 14px 12px;
-      color: var(--text);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .cat-btn:active {
-      background: var(--accent);
-      border-color: var(--accent);
-      transform: scale(0.97);
-    }
-
-    .skip-btn {
-      width: 100%;
-      margin-top: 12px;
-      padding: 14px;
-      background: transparent;
-      border: 1px solid var(--surface2);
-      border-radius: var(--radius);
-      color: var(--muted);
-      font-size: 14px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-    }
-
-    .empty-state .icon { font-size: 56px; margin-bottom: 16px; }
-    .empty-state h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-    .empty-state p { color: var(--muted); font-size: 15px; }
-
-    /* progress bar */
-    .progress-bar {
-      height: 4px;
-      background: var(--surface2);
-      border-radius: 2px;
-      margin-bottom: 20px;
-      overflow: hidden;
-    }
-
+    .progress-wrap { padding: 0 24px 4px; flex-shrink: 0; }
+    .progress-track { height: 3px; background: var(--surface); border-radius: 2px; overflow: hidden; }
     .progress-fill {
       height: 100%;
-      background: var(--accent);
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
       border-radius: 2px;
-      transition: width 0.3s ease;
+      transition: width 0.4s ease;
     }
 
-    /* ── History view ── */
-    .history-group { margin-bottom: 24px; }
-
-    .history-group h3 {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
-    }
-
-    .tx-row {
+    .queue-pill {
       background: var(--surface);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 8px;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .queue-pill b { color: var(--accent2); }
+
+    .swipe-hints {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 4px 32px;
+      flex-shrink: 0;
     }
 
-    .tx-row .tx-left { display: flex; flex-direction: column; gap: 3px; }
-    .tx-row .tx-merchant { font-size: 15px; font-weight: 600; }
-    .tx-row .tx-cat {
-      font-size: 12px;
-      color: var(--muted);
+    .hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      opacity: 0.35;
+      transition: opacity 0.3s;
+    }
+    .hint.active { opacity: 1; }
+    .hint-icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .hint.left .hint-icon { background: rgba(239,68,68,0.15); color: var(--red); }
+    .hint.right .hint-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+    .hint.up .hint-icon { background: rgba(99,102,241,0.15); color: var(--accent2); }
+    .hint span { font-size: 10px; color: var(--muted); font-weight: 500; }
+
+    .card-area {
+      flex: 1;
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      padding: 0 20px;
+      min-height: 0;
     }
-    .tx-row .tx-amount {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--red);
+
+    .card-stack {
+      position: relative;
+      width: 100%;
+      max-width: 380px;
+      height: 210px;
     }
-    .tx-row .tx-uncat {
-      font-size: 12px;
-      background: var(--surface2);
-      color: var(--muted);
-      padding: 2px 8px;
+
+    .card-ghost {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      transition: transform 0.3s ease;
+    }
+    .card-ghost-2 { transform: scale(0.92) translateY(12px); background: var(--surface2); z-index: 1; opacity: 0.5; }
+    .card-ghost-1 { transform: scale(0.96) translateY(6px); background: var(--surface); z-index: 2; opacity: 0.8; }
+
+    .tx-card {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1e293b 0%, #1a2744 100%);
+      border-radius: var(--radius);
+      border: 1px solid rgba(99,102,241,0.2);
+      padding: 24px 24px 20px;
+      z-index: 10;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+      will-change: transform;
+      touch-action: none;
+    }
+    .tx-card:active { cursor: grabbing; }
+
+    .swipe-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 11;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .swipe-overlay.left { background: linear-gradient(135deg, rgba(239,68,68,0.3), transparent); }
+    .swipe-overlay.right { background: linear-gradient(225deg, rgba(34,197,94,0.3), transparent); }
+    .swipe-overlay.up { background: linear-gradient(180deg, rgba(99,102,241,0.3), transparent); }
+
+    .swipe-label {
+      position: absolute;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 2.5px solid currentColor;
+      opacity: 0;
+    }
+    .swipe-label.skip { color: var(--red); top: 20px; left: 20px; transform: rotate(-15deg); }
+    .swipe-label.confirm { color: var(--green); top: 20px; right: 20px; transform: rotate(15deg); }
+    .swipe-label.more { color: var(--accent2); bottom: 20px; left: 50%; transform: translateX(-50%); }
+
+    .tx-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.15);
+      border-radius: 8px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent3);
+      margin-bottom: 12px;
+    }
+
+    .tx-amount {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+    .tx-amount sup { font-size: 20px; font-weight: 600; letter-spacing: 0; vertical-align: super; margin-right: 2px; opacity: 0.7; }
+    .tx-merchant { font-size: 19px; font-weight: 700; margin-bottom: 14px; }
+    .tx-meta { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+    .tx-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .ai-suggestion {
+      position: absolute;
+      bottom: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
       border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    /* ── Category section ── */
+    .cat-section { flex-shrink: 0; padding: 28px 20px 12px; }
+    .cat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .cat-top { display: flex; gap: 10px; margin-bottom: 10px; }
+    .cat-btn {
+      flex: 1;
+      background: var(--surface);
+      border: 2px solid var(--surface2);
+      border-radius: 18px;
+      padding: 13px 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .cat-btn .cat-emoji { font-size: 22px; line-height: 1; }
+    .cat-btn.suggested { border-color: var(--accent); background: rgba(99,102,241,0.12); }
+    .cat-btn.suggested::after { content: '★'; position: absolute; top: 5px; right: 7px; font-size: 9px; color: var(--accent2); }
+    .cat-btn:active { transform: scale(0.93); background: var(--accent); border-color: var(--accent); }
+
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: scale(0);
+      animation: ripple-anim 0.4s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+
+    .more-btn {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 14px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .more-btn:active { background: var(--surface2); }
+
+    /* ── Category sheet ── */
+    .cat-sheet-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 50; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(4px);
+    }
+    .cat-sheet-overlay.open { opacity: 1; pointer-events: all; }
+    .cat-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #1a2234;
+      border-radius: 28px 28px 0 0;
+      padding: 12px 20px calc(env(safe-area-inset-bottom, 20px) + 20px);
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 51;
+    }
+    .cat-sheet.open { transform: translateY(0); }
+    .sheet-handle { width: 40px; height: 4px; background: var(--surface3); border-radius: 2px; margin: 0 auto 18px; }
+    .sheet-title { font-size: 15px; font-weight: 700; margin-bottom: 18px; text-align: center; color: var(--muted); }
+    .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .cat-grid-btn {
+      background: var(--surface);
+      border: 2px solid var(--surface2);
+      border-radius: 16px;
+      padding: 13px 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .cat-grid-btn .cat-emoji { font-size: 22px; line-height: 1; }
+    .cat-grid-btn:active { transform: scale(0.9); background: var(--accent); border-color: var(--accent); }
+    .cat-grid-btn.suggested { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+
+    /* ── Card animations ── */
+    @keyframes fly-left { to { transform: translateX(-120%) rotate(-20deg); opacity: 0; } }
+    @keyframes fly-right { to { transform: translateX(120%) rotate(20deg); opacity: 0; } }
+    @keyframes fly-up { to { transform: translateY(-120%) scale(0.8); opacity: 0; } }
+    @keyframes slide-in {
+      from { transform: translateY(60px) scale(0.9); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .tx-card.fly-left { animation: fly-left 0.4s ease-in forwards; }
+    .tx-card.fly-right { animation: fly-right 0.4s ease-in forwards; }
+    .tx-card.fly-up { animation: fly-up 0.3s ease-in forwards; }
+    .tx-card.slide-in { animation: slide-in 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+
+    /* ── Empty / done states ── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 40px;
+      text-align: center;
+    }
+    .empty-state .icon { font-size: 52px; margin-bottom: 8px; }
+    .empty-state h2 { font-size: 22px; font-weight: 800; }
+    .empty-state p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .empty-state button {
+      margin-top: 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 14px;
+      padding: 13px 28px;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ── History view ── */
+    #history-view { overflow-y: auto; padding: 16px 20px; }
 
     .summary-card {
       background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1px solid var(--surface2);
       border-radius: var(--radius);
       padding: 20px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
-
-    .summary-card h3 { font-size: 13px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-
+    .summary-card h3 { font-size: 12px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
     .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-
     .summary-item label { font-size: 12px; color: var(--muted); display: block; }
     .summary-item value { font-size: 20px; font-weight: 700; color: var(--text); display: block; margin-top: 2px; }
 
-    #refresh-btn {
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 20px;
-      cursor: pointer;
-      padding: 4px;
-      line-height: 1;
-    }
+    .history-group { margin-bottom: 20px; }
+    .history-group h3 { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 
-    .spinner {
-      display: inline-block;
-      width: 18px; height: 18px;
-      border: 2px solid var(--surface2);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: middle;
+    .tx-row {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 13px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+    .tx-row .tx-left { display: flex; flex-direction: column; gap: 3px; }
+    .tx-row .tx-merchant-name { font-size: 15px; font-weight: 600; }
+    .tx-row .tx-cat { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .tx-row .tx-amount-hist { font-size: 16px; font-weight: 700; color: var(--red); }
+    .tx-uncat { font-size: 12px; background: var(--surface2); color: var(--muted); padding: 2px 8px; border-radius: 20px; }
 
+    /* ── Spinner ── */
+    .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Toast ── */
     .toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 90px;
       left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--green);
-      color: white;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      color: var(--text);
       padding: 10px 20px;
       border-radius: 20px;
       font-size: 14px;
       font-weight: 600;
-      transition: transform 0.3s ease;
+      opacity: 0;
+      transition: all 0.25s ease;
       z-index: 100;
+      white-space: nowrap;
+      pointer-events: none;
     }
-
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>💳 FinanceTrack</h1>
-  <div id="tab-bar">
-    <button class="tab active" onclick="showTab('classify')">Classify</button>
-    <button class="tab" onclick="showTab('history')">History</button>
-  </div>
-</header>
+<div class="screen">
+  <header>
+    <h1>💳 FinanceTrack</h1>
+    <div id="tab-bar">
+      <button class="tab active" onclick="showTab('classify')">Classify</button>
+      <button class="tab" onclick="showTab('history')">History</button>
+    </div>
+  </header>
 
-<main>
-  <!-- Classify Tab -->
+  <!-- ── Classify View ── -->
   <div id="classify-view" class="active">
-    <div id="classify-content">
-      <div style="text-align:center;padding:40px"><div class="spinner"></div></div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="swipe-hints">
+      <div class="hint left" id="hint-left"><div class="hint-icon">✕</div><span>Skip</span></div>
+      <div class="hint up" id="hint-up"><div class="hint-icon">↑</div><span>More</span></div>
+      <div class="hint right" id="hint-right"><div class="hint-icon">✓</div><span>Confirm</span></div>
+    </div>
+
+    <div class="card-area" id="card-area">
+      <div class="card-stack" id="card-stack">
+        <div class="card-ghost card-ghost-2" id="ghost2"></div>
+        <div class="card-ghost card-ghost-1" id="ghost1"></div>
+        <div class="tx-card" id="tx-card">
+          <div class="swipe-overlay left" id="overlay-left"></div>
+          <div class="swipe-overlay right" id="overlay-right"></div>
+          <div class="swipe-overlay up" id="overlay-up"></div>
+          <div class="swipe-label skip" id="label-skip">Skip</div>
+          <div class="swipe-label confirm" id="label-confirm">Save</div>
+          <div class="swipe-label more" id="label-more">More</div>
+          <div class="tx-badge">UPI Debit · Axis Bank</div>
+          <div class="tx-amount"><sup>₹</sup><span id="card-amount">—</span></div>
+          <div class="tx-merchant" id="card-merchant">Loading…</div>
+          <div class="tx-meta">
+            <span>📅 <span id="card-date">—</span></span>
+            <span>🏦 <span id="card-account">—</span></span>
+          </div>
+          <div class="ai-suggestion">✦ Suggested: <span id="suggested-cat">Food</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-section" id="cat-section">
+      <div class="cat-label">Quick classify</div>
+      <div class="cat-top" id="cat-top"></div>
+      <button class="more-btn" onclick="openSheet()">⋮ All categories</button>
     </div>
   </div>
 
-  <!-- History Tab -->
+  <!-- ── History View ── -->
   <div id="history-view">
-    <div id="history-content">
-      <div style="text-align:center;padding:40px"><div class="spinner"></div></div>
+    <div id="history-content" style="display:flex;align-items:center;justify-content:center;padding:40px">
+      <div class="spinner"></div>
     </div>
   </div>
-</main>
+</div>
+
+<!-- Category sheet -->
+<div class="cat-sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+<div class="cat-sheet" id="cat-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Choose a category</div>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -335,7 +528,10 @@
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4dGNpcWNzaWdibHh6a2xmanZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzMjk2NTIsImV4cCI6MjA5NjkwNTY1Mn0.7qMSidJ6EuoxNPlV9Kq9qjHN_00t-dei9MX257mZyhY';
   const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
-  const CATEGORIES = [
+  // Default suggestion until LLM is wired in
+  const DEFAULT_SUGGESTION = 'Food';
+
+  const ALL_CATEGORIES = [
     { emoji: '🍔', label: 'Food' },
     { emoji: '🚗', label: 'Travel' },
     { emoji: '🛍️', label: 'Shopping' },
@@ -350,11 +546,11 @@
   let unclassified = [];
   let currentIndex = 0;
   let allTransactions = [];
+  let isDragging = false, startX = 0, startY = 0, currentX = 0, currentY = 0;
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
+  // ── Tab switching ──
   function showTab(tab) {
     document.querySelectorAll('.tab').forEach((t, i) => {
       t.classList.toggle('active', (i === 0 && tab === 'classify') || (i === 1 && tab === 'history'));
@@ -364,90 +560,248 @@
     if (tab === 'history') loadHistory();
   }
 
+  // ── Load unclassified ──
   async function loadUnclassified() {
     try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/transactions?category=is.null&order=created_at.desc`,
-        { headers: HEADERS }
-      );
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/transactions?category=is.null&order=created_at.desc`, { headers: HEADERS });
       unclassified = await res.json();
       currentIndex = 0;
-      renderClassify();
-    } catch (e) {
-      document.getElementById('classify-content').innerHTML =
-        `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't connect</h2><p>Check Supabase config</p></div>`;
+      renderCard(0);
+      initSwipe();
+    } catch(e) {
+      showCardError();
     }
   }
 
-  function renderClassify() {
-    const container = document.getElementById('classify-content');
-    const remaining = unclassified.length - currentIndex;
+  function showCardError() {
+    document.getElementById('card-area').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⚠️</div>
+        <h2>Can't connect</h2>
+        <p>Check your Supabase config</p>
+        <button onclick="loadUnclassified()">Retry</button>
+      </div>`;
+  }
 
-    if (remaining === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">✅</div>
-          <h2>All caught up!</h2>
-          <p>No transactions to classify right now.</p>
-          <button class="skip-btn" style="margin-top:24px" onclick="loadUnclassified()">Refresh</button>
-        </div>`;
+  // ── Render card ──
+  function renderCard(index) {
+    const total = unclassified.length;
+
+    if (index >= total) {
+      showAllDone();
       return;
     }
 
-    const tx = unclassified[currentIndex];
-    const done = currentIndex;
-    const total = unclassified.length;
-    const pct = total > 0 ? (done / total) * 100 : 0;
+    const tx = unclassified[index];
+    const suggested = DEFAULT_SUGGESTION; // swap with LLM later
 
-    const catButtons = CATEGORIES.map(c => `
-      <button class="cat-btn" onclick="classify('${tx.id}', '${c.label}')">
-        ${c.emoji} ${c.label}
-      </button>`).join('');
+    document.getElementById('card-amount').textContent = tx.amount ? Number(tx.amount).toLocaleString('en-IN') : '—';
+    document.getElementById('card-merchant').textContent = tx.merchant || 'Unknown';
+    document.getElementById('card-date').textContent = tx.created_at ? tx.created_at.slice(0,10) : '—';
+    document.getElementById('card-account').textContent = tx.account || '—';
+    document.getElementById('suggested-cat').textContent = suggested;
+    document.getElementById('progress-fill').style.width = ((index / total) * 100) + '%';
 
-    container.innerHTML = `
-      <div class="badge">📋 <span>${remaining}</span> to classify</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="card">
-        <div class="amount"><span>₹</span>${Number(tx.amount).toLocaleString('en-IN')}</div>
-        <div class="merchant">${tx.merchant || 'Unknown merchant'}</div>
-        <div class="meta">
-          <span>📅 ${tx.created_at ? tx.created_at.slice(0,10) : ''}</span>
-          <span>🏦 ${tx.account || 'N/A'}</span>
-        </div>
-      </div>
-      <div class="categories">${catButtons}</div>
-      <button class="skip-btn" onclick="skip()">Skip for now</button>`;
+    document.getElementById('ghost1').style.opacity = (index + 1 < total) ? '0.8' : '0';
+    document.getElementById('ghost2').style.opacity = (index + 2 < total) ? '0.5' : '0';
+
+    renderTopCats(suggested);
   }
 
-  async function classify(id, category) {
+  function renderTopCats(suggested) {
+    const suggestedCat = ALL_CATEGORIES.find(c => c.label === suggested);
+    const others = ALL_CATEGORIES.filter(c => c.label !== suggested).slice(0, 2);
+    const top3 = suggestedCat ? [suggestedCat, ...others] : ALL_CATEGORIES.slice(0, 3);
+
+    document.getElementById('cat-top').innerHTML = top3.map((c, i) => `
+      <button class="cat-btn ${i === 0 ? 'suggested' : ''}" onclick="classify('${c.label}', event)">
+        <span class="cat-emoji">${c.emoji}</span>
+        <span>${c.label}</span>
+      </button>`).join('');
+
+    document.getElementById('cat-grid').innerHTML = ALL_CATEGORIES.map(c => `
+      <button class="cat-grid-btn ${c.label === suggested ? 'suggested' : ''}" onclick="classify('${c.label}', event)">
+        <span class="cat-emoji">${c.emoji}</span>
+        <span>${c.label}</span>
+      </button>`).join('');
+  }
+
+  function showAllDone() {
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('cat-section').style.display = 'none';
+    document.querySelector('.swipe-hints').style.display = 'none';
+    document.getElementById('card-area').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">✅</div>
+        <h2>All caught up!</h2>
+        <p>No more transactions to classify. Check back after your next purchase.</p>
+        <button onclick="loadUnclassified()">Refresh</button>
+      </div>`;
+  }
+
+  // ── Classify ──
+  async function classify(label, event) {
+    addRipple(event?.currentTarget, event);
+    closeSheet();
+    const tx = unclassified[currentIndex];
+    if (!tx) return;
+    flyCard('right', label);
     try {
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/transactions?id=eq.${id}`,
-        { method: 'PATCH', headers: HEADERS, body: JSON.stringify({ category }) }
-      );
-      showToast(`Tagged as ${category}`);
-      currentIndex++;
-      renderClassify();
-    } catch (e) {
-      showToast('Error saving, try again');
+      await fetch(`${SUPABASE_URL}/rest/v1/transactions?id=eq.${tx.id}`,
+        { method: 'PATCH', headers: HEADERS, body: JSON.stringify({ category: label }) });
+    } catch(e) {
+      showToast('Save failed — check connection');
     }
   }
 
-  function skip() {
-    currentIndex++;
-    renderClassify();
+  function addRipple(el, event) {
+    if (!el || !event) return;
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    const rect = el.getBoundingClientRect();
+    const x = (event.clientX || event.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left;
+    const y = (event.clientY || event.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top;
+    r.style.cssText = `left:${x}px;top:${y}px;width:80px;height:80px;margin-left:-40px;margin-top:-40px`;
+    el.appendChild(r);
+    setTimeout(() => r.remove(), 500);
   }
 
+  function flyCard(direction, category) {
+    const card = document.getElementById('tx-card');
+    const cls = { left: 'fly-left', right: 'fly-right', up: 'fly-up' }[direction];
+    card.classList.add(cls);
+    card.style.transition = 'none';
+
+    if (category) {
+      const cat = ALL_CATEGORIES.find(c => c.label === category);
+      showToast(`${cat?.emoji || ''} ${category}`);
+    } else {
+      showToast('Skipped');
+    }
+
+    setTimeout(() => {
+      currentIndex++;
+      card.classList.remove(cls);
+      card.style.transform = '';
+      card.style.transition = '';
+      resetOverlays();
+      renderCard(currentIndex);
+      card.classList.add('slide-in');
+      setTimeout(() => card.classList.remove('slide-in'), 400);
+    }, 350);
+  }
+
+  function resetOverlays() {
+    ['overlay-left','overlay-right','overlay-up'].forEach(id => document.getElementById(id).style.opacity = 0);
+    ['label-skip','label-confirm','label-more'].forEach(id => document.getElementById(id).style.opacity = 0);
+    ['hint-left','hint-right','hint-up'].forEach(id => document.getElementById(id).classList.remove('active'));
+  }
+
+  // ── Swipe gestures ──
+  function initSwipe() {
+    const card = document.getElementById('tx-card');
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('mousedown', onStart);
+  }
+
+  function onStart(e) {
+    isDragging = true;
+    const p = e.touches?.[0] || e;
+    startX = p.clientX; startY = p.clientY;
+    currentX = 0; currentY = 0;
+    const card = document.getElementById('tx-card');
+    card.style.transition = 'none';
+  }
+
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mousemove', onMove);
+
+  function onMove(e) {
+    if (!isDragging) return;
+    e.preventDefault?.();
+    const p = e.touches?.[0] || e;
+    currentX = p.clientX - startX;
+    currentY = p.clientY - startY;
+    const card = document.getElementById('tx-card');
+    card.style.transform = `translateX(${currentX}px) translateY(${currentY}px) rotate(${currentX * 0.08}deg)`;
+
+    const absX = Math.abs(currentX), absY = Math.abs(currentY), T = 40;
+    if (absY > absX && currentY < -T) {
+      document.getElementById('overlay-up').style.opacity = Math.min(absY/150, 0.8);
+      document.getElementById('overlay-left').style.opacity = 0;
+      document.getElementById('overlay-right').style.opacity = 0;
+      document.getElementById('label-more').style.opacity = Math.min(absY/100, 1);
+      document.getElementById('label-skip').style.opacity = 0;
+      document.getElementById('label-confirm').style.opacity = 0;
+      document.getElementById('hint-up').classList.add('active');
+      document.getElementById('hint-left').classList.remove('active');
+      document.getElementById('hint-right').classList.remove('active');
+    } else if (currentX < -T) {
+      document.getElementById('overlay-left').style.opacity = Math.min(absX/150, 0.8);
+      document.getElementById('overlay-right').style.opacity = 0;
+      document.getElementById('overlay-up').style.opacity = 0;
+      document.getElementById('label-skip').style.opacity = Math.min(absX/100, 1);
+      document.getElementById('label-confirm').style.opacity = 0;
+      document.getElementById('label-more').style.opacity = 0;
+      document.getElementById('hint-left').classList.add('active');
+      document.getElementById('hint-right').classList.remove('active');
+      document.getElementById('hint-up').classList.remove('active');
+    } else if (currentX > T) {
+      document.getElementById('overlay-right').style.opacity = Math.min(absX/150, 0.8);
+      document.getElementById('overlay-left').style.opacity = 0;
+      document.getElementById('overlay-up').style.opacity = 0;
+      document.getElementById('label-confirm').style.opacity = Math.min(absX/100, 1);
+      document.getElementById('label-skip').style.opacity = 0;
+      document.getElementById('label-more').style.opacity = 0;
+      document.getElementById('hint-right').classList.add('active');
+      document.getElementById('hint-left').classList.remove('active');
+      document.getElementById('hint-up').classList.remove('active');
+    } else {
+      resetOverlays();
+    }
+  }
+
+  window.addEventListener('touchend', onEnd);
+  window.addEventListener('mouseup', onEnd);
+
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    const card = document.getElementById('tx-card');
+    card.style.transition = '';
+    const absX = Math.abs(currentX), absY = Math.abs(currentY), TRIGGER = 80;
+    if (absY > absX && currentY < -TRIGGER) {
+      card.style.transform = '';
+      resetOverlays();
+      openSheet();
+    } else if (currentX < -TRIGGER) {
+      flyCard('left');
+    } else if (currentX > TRIGGER) {
+      classify(DEFAULT_SUGGESTION, null);
+    } else {
+      card.style.transform = '';
+      resetOverlays();
+    }
+  }
+
+  // ── Sheet ──
+  function openSheet() {
+    document.getElementById('sheet-overlay').classList.add('open');
+    document.getElementById('cat-sheet').classList.add('open');
+  }
+  function closeSheet() {
+    document.getElementById('sheet-overlay').classList.remove('open');
+    document.getElementById('cat-sheet').classList.remove('open');
+  }
+
+  // ── History ──
   async function loadHistory() {
     const container = document.getElementById('history-content');
     try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/transactions?order=created_at.desc`,
-        { headers: HEADERS }
-      );
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/transactions?order=created_at.desc`, { headers: HEADERS });
       allTransactions = await res.json();
       renderHistory();
-    } catch (e) {
+    } catch(e) {
       container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't load</h2></div>`;
     }
   }
@@ -455,17 +809,13 @@
   function renderHistory() {
     const container = document.getElementById('history-content');
     if (!allTransactions.length) {
-      container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><h2>No transactions yet</h2></div>`;
+      container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><h2>No transactions yet</h2><p>Transactions will appear here once MacroDroid picks them up.</p></div>`;
       return;
     }
-
-    // Summary
     const classified = allTransactions.filter(t => t.category);
-    const total = allTransactions.reduce((s, t) => s + (Number(t.amount) || 0), 0);
-    const thisMonth = allTransactions.filter(t => t.created_at && t.created_at.startsWith(new Date().toISOString().slice(0,7)));
-    const monthTotal = thisMonth.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+    const thisMonth = allTransactions.filter(t => t.created_at?.startsWith(new Date().toISOString().slice(0,7)));
+    const monthTotal = thisMonth.reduce((s,t) => s + (Number(t.amount)||0), 0);
 
-    // Group by date
     const groups = {};
     allTransactions.forEach(t => {
       const d = t.created_at ? t.created_at.slice(0,10) : 'Unknown';
@@ -473,56 +823,43 @@
       groups[d].push(t);
     });
 
-    const groupsHtml = Object.entries(groups).map(([date, txs]) => `
-      <div class="history-group">
-        <h3>${date}</h3>
-        ${txs.map(t => `
-          <div class="tx-row">
-            <div class="tx-left">
-              <div class="tx-merchant">${t.merchant || 'Unknown'}</div>
-              <div class="tx-cat">
-                ${t.category
-                  ? `${CATEGORIES.find(c=>c.label===t.category)?.emoji||'📦'} ${t.category}`
-                  : `<span class="tx-uncat">Unclassified</span>`}
-              </div>
-            </div>
-            <div class="tx-amount">−₹${Number(t.amount).toLocaleString('en-IN')}</div>
-          </div>`).join('')}
-      </div>`).join('');
-
     container.innerHTML = `
       <div class="summary-card">
         <h3>Summary</h3>
         <div class="summary-grid">
-          <div class="summary-item">
-            <label>This Month</label>
-            <value>₹${monthTotal.toLocaleString('en-IN')}</value>
-          </div>
-          <div class="summary-item">
-            <label>Total Logged</label>
-            <value>${allTransactions.length}</value>
-          </div>
-          <div class="summary-item">
-            <label>Classified</label>
-            <value>${classified.length}</value>
-          </div>
-          <div class="summary-item">
-            <label>Unclassified</label>
-            <value>${allTransactions.length - classified.length}</value>
-          </div>
+          <div class="summary-item"><label>This Month</label><value>₹${monthTotal.toLocaleString('en-IN')}</value></div>
+          <div class="summary-item"><label>Total Logged</label><value>${allTransactions.length}</value></div>
+          <div class="summary-item"><label>Classified</label><value>${classified.length}</value></div>
+          <div class="summary-item"><label>Unclassified</label><value>${allTransactions.length - classified.length}</value></div>
         </div>
       </div>
-      ${groupsHtml}`;
+      ${Object.entries(groups).map(([date, txs]) => `
+        <div class="history-group">
+          <h3>${date}</h3>
+          ${txs.map(t => `
+            <div class="tx-row">
+              <div class="tx-left">
+                <div class="tx-merchant-name">${t.merchant || 'Unknown'}</div>
+                <div class="tx-cat">
+                  ${t.category
+                    ? `${ALL_CATEGORIES.find(c=>c.label===t.category)?.emoji||'📦'} ${t.category}`
+                    : `<span class="tx-uncat">Unclassified</span>`}
+                </div>
+              </div>
+              <div class="tx-amount-hist">−₹${Number(t.amount||0).toLocaleString('en-IN')}</div>
+            </div>`).join('')}
+        </div>`).join('')}`;
   }
 
+  // ── Toast ──
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
+    setTimeout(() => t.classList.remove('show'), 1800);
   }
 
-  // Initial load
+  // ── Init ──
   loadUnclassified();
 </script>
 </body>
