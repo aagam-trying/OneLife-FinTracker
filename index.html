@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinanceTrack</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --radius: 16px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 20px 20px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--surface2);
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    #tab-bar {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 4px;
+    }
+
+    .tab {
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* ── Classify view ── */
+    #classify-view, #history-view { display: none; }
+    #classify-view.active, #history-view.active { display: block; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .badge span { color: var(--accent2); font-weight: 700; }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card .amount {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1px;
+    }
+
+    .card .amount span {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+
+    .card .merchant {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 6px;
+      color: var(--text);
+    }
+
+    .card .meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .cat-btn {
+      background: var(--surface);
+      border: 2px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cat-btn:active {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: scale(0.97);
+    }
+
+    .skip-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 14px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state .icon { font-size: 56px; margin-bottom: 16px; }
+    .empty-state h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .empty-state p { color: var(--muted); font-size: 15px; }
+
+    /* progress bar */
+    .progress-bar {
+      height: 4px;
+      background: var(--surface2);
+      border-radius: 2px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    /* ── History view ── */
+    .history-group { margin-bottom: 24px; }
+
+    .history-group h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .tx-row {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tx-row .tx-left { display: flex; flex-direction: column; gap: 3px; }
+    .tx-row .tx-merchant { font-size: 15px; font-weight: 600; }
+    .tx-row .tx-cat {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tx-row .tx-amount {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--red);
+    }
+    .tx-row .tx-uncat {
+      font-size: 12px;
+      background: var(--surface2);
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card h3 { font-size: 13px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+    .summary-item label { font-size: 12px; color: var(--muted); display: block; }
+    .summary-item value { font-size: 20px; font-weight: 700; color: var(--text); display: block; margin-top: 2px; }
+
+    #refresh-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--surface2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--green);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>💳 FinanceTrack</h1>
+  <div id="tab-bar">
+    <button class="tab active" onclick="showTab('classify')">Classify</button>
+    <button class="tab" onclick="showTab('history')">History</button>
+  </div>
+</header>
+
+<main>
+  <!-- Classify Tab -->
+  <div id="classify-view" class="active">
+    <div id="classify-content">
+      <div style="text-align:center;padding:40px"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div id="history-view">
+    <div id="history-content">
+      <div style="text-align:center;padding:40px"><div class="spinner"></div></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─────────────────────────────────────────
+  // CONFIG — update SCRIPT_URL after deploying Apps Script
+  // ─────────────────────────────────────────
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywcU-x6wFh1gT5zX04WJSDkcGBAYAKcQQQol_uL5hR1_FEooK11w_fBAupbQUDNAW0/exec';
+
+  // Mock data for local preview (removed in production)
+  const MOCK = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const MOCK_DATA = [
+    { id: 1, date: '2026-06-14', amount: '2450', merchant: 'Swiggy', account: 'XX4521', category: '', raw_sms: '' },
+    { id: 2, date: '2026-06-14', amount: '340',  merchant: 'Uber', account: 'XX4521', category: '', raw_sms: '' },
+    { id: 3, date: '2026-06-13', amount: '1200', merchant: 'Amazon', account: 'XX4521', category: '', raw_sms: '' },
+  ];
+
+  const CATEGORIES = [
+    { emoji: '🍔', label: 'Food' },
+    { emoji: '🚗', label: 'Travel' },
+    { emoji: '🛍️', label: 'Shopping' },
+    { emoji: '🏠', label: 'Bills' },
+    { emoji: '🎬', label: 'Entertainment' },
+    { emoji: '💊', label: 'Health' },
+    { emoji: '💰', label: 'Investment' },
+    { emoji: '📦', label: 'Others' },
+  ];
+  // ─────────────────────────────────────────
+
+  let unclassified = [];
+  let currentIndex = 0;
+  let allTransactions = [];
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+
+  function showTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'classify') || (i === 1 && tab === 'history'));
+    });
+    document.getElementById('classify-view').classList.toggle('active', tab === 'classify');
+    document.getElementById('history-view').classList.toggle('active', tab === 'history');
+    if (tab === 'history') loadHistory();
+  }
+
+  async function loadUnclassified() {
+    if (MOCK) {
+      unclassified = MOCK_DATA.filter(t => !t.category);
+      currentIndex = 0;
+      renderClassify();
+      return;
+    }
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=unclassified`, { redirect: 'follow' });
+      const data = await res.json();
+      unclassified = data.transactions || [];
+      currentIndex = 0;
+      renderClassify();
+    } catch (e) {
+      document.getElementById('classify-content').innerHTML =
+        `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't connect</h2><p>Check your Apps Script URL in index.html</p></div>`;
+    }
+  }
+
+  function renderClassify() {
+    const container = document.getElementById('classify-content');
+    const remaining = unclassified.length - currentIndex;
+
+    if (remaining === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">✅</div>
+          <h2>All caught up!</h2>
+          <p>No transactions to classify right now.</p>
+          <button class="skip-btn" style="margin-top:24px" onclick="loadUnclassified()">Refresh</button>
+        </div>`;
+      return;
+    }
+
+    const tx = unclassified[currentIndex];
+    const done = currentIndex;
+    const total = unclassified.length;
+    const pct = total > 0 ? (done / total) * 100 : 0;
+
+    const catButtons = CATEGORIES.map(c => `
+      <button class="cat-btn" onclick="classify('${tx.id}', '${c.label}')">
+        ${c.emoji} ${c.label}
+      </button>`).join('');
+
+    container.innerHTML = `
+      <div class="badge">📋 <span>${remaining}</span> to classify</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="card">
+        <div class="amount"><span>₹</span>${Number(tx.amount).toLocaleString('en-IN')}</div>
+        <div class="merchant">${tx.merchant || 'Unknown merchant'}</div>
+        <div class="meta">
+          <span>📅 ${tx.date}</span>
+          <span>🏦 ${tx.account || 'N/A'}</span>
+        </div>
+      </div>
+      <div class="categories">${catButtons}</div>
+      <button class="skip-btn" onclick="skip()">Skip for now</button>`;
+  }
+
+  async function classify(id, category) {
+    if (MOCK) {
+      const t = MOCK_DATA.find(t => t.id === id);
+      if (t) t.category = category;
+      showToast(`Tagged as ${category}`);
+      currentIndex++;
+      renderClassify();
+      return;
+    }
+    try {
+      await fetch(`${SCRIPT_URL}?action=update&id=${id}&category=${encodeURIComponent(category)}`, { redirect: 'follow' });
+      showToast(`Tagged as ${category}`);
+      currentIndex++;
+      renderClassify();
+    } catch (e) {
+      showToast('Error saving, try again');
+    }
+  }
+
+  function skip() {
+    currentIndex++;
+    renderClassify();
+  }
+
+  async function loadHistory() {
+    const container = document.getElementById('history-content');
+    if (MOCK) {
+      allTransactions = [...MOCK_DATA].reverse();
+      renderHistory();
+      return;
+    }
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=all`, { redirect: 'follow' });
+      const data = await res.json();
+      allTransactions = (data.transactions || []).reverse();
+      renderHistory();
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't load</h2></div>`;
+    }
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('history-content');
+    if (!allTransactions.length) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><h2>No transactions yet</h2></div>`;
+      return;
+    }
+
+    // Summary
+    const classified = allTransactions.filter(t => t.category);
+    const total = allTransactions.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+    const thisMonth = allTransactions.filter(t => t.date && t.date.startsWith(new Date().toISOString().slice(0,7)));
+    const monthTotal = thisMonth.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+
+    // Group by date
+    const groups = {};
+    allTransactions.forEach(t => {
+      const d = t.date || 'Unknown';
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(t);
+    });
+
+    const groupsHtml = Object.entries(groups).map(([date, txs]) => `
+      <div class="history-group">
+        <h3>${date}</h3>
+        ${txs.map(t => `
+          <div class="tx-row">
+            <div class="tx-left">
+              <div class="tx-merchant">${t.merchant || 'Unknown'}</div>
+              <div class="tx-cat">
+                ${t.category
+                  ? `${CATEGORIES.find(c=>c.label===t.category)?.emoji||'📦'} ${t.category}`
+                  : `<span class="tx-uncat">Unclassified</span>`}
+              </div>
+            </div>
+            <div class="tx-amount">−₹${Number(t.amount).toLocaleString('en-IN')}</div>
+          </div>`).join('')}
+      </div>`).join('');
+
+    container.innerHTML = `
+      <div class="summary-card">
+        <h3>Summary</h3>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <label>This Month</label>
+            <value>₹${monthTotal.toLocaleString('en-IN')}</value>
+          </div>
+          <div class="summary-item">
+            <label>Total Logged</label>
+            <value>${allTransactions.length}</value>
+          </div>
+          <div class="summary-item">
+            <label>Classified</label>
+            <value>${classified.length}</value>
+          </div>
+          <div class="summary-item">
+            <label>Unclassified</label>
+            <value>${allTransactions.length - classified.length}</value>
+          </div>
+        </div>
+      </div>
+      ${groupsHtml}`;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // Initial load
+  loadUnclassified();
+</script>
+</body>
+</html>
