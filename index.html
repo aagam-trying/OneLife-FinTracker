@@ -329,17 +329,11 @@
 
 <script>
   // ─────────────────────────────────────────
-  // CONFIG — update SCRIPT_URL after deploying Apps Script
+  // CONFIG
   // ─────────────────────────────────────────
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby8z030z2bI5lrfSBG7WgTSXI26s6T6msxclFui5mWCoqI-zitDZQ3RUrlUvX-wOVX_/exec';
-
-  // Mock data for local preview (removed in production)
-  const MOCK = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const MOCK_DATA = [
-    { id: 1, date: '2026-06-14', amount: '2450', merchant: 'Swiggy', account: 'XX4521', category: '', raw_sms: '' },
-    { id: 2, date: '2026-06-14', amount: '340',  merchant: 'Uber', account: 'XX4521', category: '', raw_sms: '' },
-    { id: 3, date: '2026-06-13', amount: '1200', merchant: 'Amazon', account: 'XX4521', category: '', raw_sms: '' },
-  ];
+  const SUPABASE_URL = 'https://axtciqcsigblxzklfjvj.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4dGNpcWNzaWdibHh6a2xmanZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzMjk2NTIsImV4cCI6MjA5NjkwNTY1Mn0.7qMSidJ6EuoxNPlV9Kq9qjHN_00t-dei9MX257mZyhY';
+  const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
 
   const CATEGORIES = [
     { emoji: '🍔', label: 'Food' },
@@ -371,21 +365,17 @@
   }
 
   async function loadUnclassified() {
-    if (MOCK) {
-      unclassified = MOCK_DATA.filter(t => !t.category);
-      currentIndex = 0;
-      renderClassify();
-      return;
-    }
     try {
-      const res = await fetch(`${SCRIPT_URL}?action=unclassified`, { redirect: 'follow' });
-      const data = await res.json();
-      unclassified = data.transactions || [];
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/transactions?category=is.null&order=created_at.desc`,
+        { headers: HEADERS }
+      );
+      unclassified = await res.json();
       currentIndex = 0;
       renderClassify();
     } catch (e) {
       document.getElementById('classify-content').innerHTML =
-        `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't connect</h2><p>Check your Apps Script URL in index.html</p></div>`;
+        `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't connect</h2><p>Check Supabase config</p></div>`;
     }
   }
 
@@ -421,7 +411,7 @@
         <div class="amount"><span>₹</span>${Number(tx.amount).toLocaleString('en-IN')}</div>
         <div class="merchant">${tx.merchant || 'Unknown merchant'}</div>
         <div class="meta">
-          <span>📅 ${tx.date}</span>
+          <span>📅 ${tx.created_at ? tx.created_at.slice(0,10) : ''}</span>
           <span>🏦 ${tx.account || 'N/A'}</span>
         </div>
       </div>
@@ -430,16 +420,11 @@
   }
 
   async function classify(id, category) {
-    if (MOCK) {
-      const t = MOCK_DATA.find(t => t.id === id);
-      if (t) t.category = category;
-      showToast(`Tagged as ${category}`);
-      currentIndex++;
-      renderClassify();
-      return;
-    }
     try {
-      await fetch(`${SCRIPT_URL}?action=update&id=${id}&category=${encodeURIComponent(category)}`, { redirect: 'follow' });
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/transactions?id=eq.${id}`,
+        { method: 'PATCH', headers: HEADERS, body: JSON.stringify({ category }) }
+      );
       showToast(`Tagged as ${category}`);
       currentIndex++;
       renderClassify();
@@ -455,15 +440,12 @@
 
   async function loadHistory() {
     const container = document.getElementById('history-content');
-    if (MOCK) {
-      allTransactions = [...MOCK_DATA].reverse();
-      renderHistory();
-      return;
-    }
     try {
-      const res = await fetch(`${SCRIPT_URL}?action=all`, { redirect: 'follow' });
-      const data = await res.json();
-      allTransactions = (data.transactions || []).reverse();
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/transactions?order=created_at.desc`,
+        { headers: HEADERS }
+      );
+      allTransactions = await res.json();
       renderHistory();
     } catch (e) {
       container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h2>Can't load</h2></div>`;
@@ -480,13 +462,13 @@
     // Summary
     const classified = allTransactions.filter(t => t.category);
     const total = allTransactions.reduce((s, t) => s + (Number(t.amount) || 0), 0);
-    const thisMonth = allTransactions.filter(t => t.date && t.date.startsWith(new Date().toISOString().slice(0,7)));
+    const thisMonth = allTransactions.filter(t => t.created_at && t.created_at.startsWith(new Date().toISOString().slice(0,7)));
     const monthTotal = thisMonth.reduce((s, t) => s + (Number(t.amount) || 0), 0);
 
     // Group by date
     const groups = {};
     allTransactions.forEach(t => {
-      const d = t.date || 'Unknown';
+      const d = t.created_at ? t.created_at.slice(0,10) : 'Unknown';
       if (!groups[d]) groups[d] = [];
       groups[d].push(t);
     });
