@@ -569,16 +569,16 @@
       renderCard(0);
       initSwipe();
     } catch(e) {
-      showCardError();
+      showCardError(e.message);
     }
   }
 
-  function showCardError() {
+  function showCardError(msg) {
     document.getElementById('card-area').innerHTML = `
       <div class="empty-state">
         <div class="icon">⚠️</div>
         <h2>Can't connect</h2>
-        <p>Check your Supabase config</p>
+        <p style="word-break:break-all;font-size:12px">${msg || 'Check your Supabase config'}</p>
         <button onclick="loadUnclassified()">Retry</button>
       </div>`;
   }
